@@ -159,6 +159,336 @@
 #define load_no_speculate_cmp(__ptr, __low, __high, __failval, __cmpptr) \
   (__load_no_speculate (__ptr, __low, __high, __failval, __cmpptr))
 
+#elif defined (__ARM_32BIT_STATE)
+#ifdef __thumb2__
+/* Thumb2 case.  */
+
+#define __load_no_speculate1(__ptr, __low, __high, __failval,		\
+			     __cmpptr, __sz) 				\
+(__extension__ ({							\
+  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__(*(__ptr)) __fv						\
+    = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
+  /* If __high is explicitly NULL, we must not emit the			\
+     upper-bound comparison.  We need to cast __high to an		\
+     unsigned long before handing it to __builtin_constant_p to	\
+     ensure that clang/llvm correctly detects NULL as a constant if it	\
+     is defined as (void*) 0.  */					\
+  if (__builtin_constant_p ((unsigned long)__high)			\
+      && __high == ((void *)0))						\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "bcc\t.ns%=\n\t"							\
+      "ldr" __sz "\t%[__v], %[__p]\n"					\
+      ".ns%=:\n\t"							\
+      "it\tcc\n\t"							\
+      "movcc\t%[__v], %[__f]\n\t"					\
+      ".inst 0xf3af8014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&l" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low), 			\
+      /* The memory location from which we will load.  */		\
+      [__p] "m" (*(__ptr)),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "rKI" (__fv) 						\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  else									\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "it\tcs\n\t"							\
+      "cmpcs\t%[__h], %[__c]\n\t"					\
+      "bls\t.ns%=\n\t"							\
+      "ldr" __sz "\t%[__v], %[__p]\n"					\
+      ".ns%=:\n\t"							\
+      "it\tls\n\t"							\
+      "movls\t%[__v], %[__f]\n\t"					\
+      ".inst 0xf3af8014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&l" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low),			\
+      [__h] "r" (__high),						\
+      /* The memory location from which we will load.  */		\
+      [__p] "m" (*(__ptr)),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "rKI" (__fv) 						\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  __nln_val;								\
+}))									\
+									\
+/* Double-word version.  */
+#define __load_no_speculate2(__ptr, __low, __high, __failval,		\
+			     __cmpptr) 			\
+(__extension__ ({							\
+  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__(*(__ptr)) __fv						\
+    = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
+  /* If __high is explicitly NULL, we must not emit the			\
+     upper-bound comparison.  We need to cast __high to an		\
+     unsigned long before handing it to __builtin_constant_p to	\
+     ensure that clang/llvm correctly detects NULL as a constant if it	\
+     is defined as (void*) 0.  */					\
+   __typeof__ (__ptr) __tmp_ptr;					\
+  if (__builtin_constant_p ((unsigned long)__high)			\
+      && __high == ((void *)0))						\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "bcc\t.ns%=\n\t"							\
+      "ldr\t%Q[__v], [%[__p]]\n\t"					\
+      "ldr\t%R[__v], [%[__p], #4]\n"					\
+      ".ns%=:\n\t"							\
+      "it\tcc\n\t"							\
+      "movcc\t%Q[__v], %Q[__f]\n\t"					\
+      "it\tcc\n\t"							\
+      "movcc\t%R[__v], %R[__f]\n\t"					\
+      ".inst 0xf3af8014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&l" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low), 			\
+      /* The memory location from which we will load.  */		\
+      [__p] "r" (__ptr),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "r" (__fv) 							\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  else									\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "it\tcs\n\t"							\
+      "cmpcs\t%[__h], %[__c]\n\t"					\
+      "bls\t.ns%=\n\t"							\
+      "ldr\t%Q[__v], [%[__p]]\n\t"					\
+      "ldr\t%R[__v], [%[__p], #4]\n"					\
+      ".ns%=:\n\t"							\
+      "it\tls\n\t"							\
+      "movls\t%Q[__v], %Q[__f]\n\t"					\
+      "it\tls\n\t"							\
+      "movls\t%R[__v], %R[__f]\n\t"					\
+      ".inst 0xf3af8014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&l" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low),			\
+      [__h] "r" (__high),						\
+      /* The memory location from which we will load.  */		\
+      [__p] "r" (__ptr),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "r" (__fv) 							\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  __nln_val;								\
+}))
+
+#else
+/* ARM case.  */
+
+#define __load_no_speculate1(__ptr, __low, __high, __failval,		\
+			     __cmpptr, __sz) 				\
+(__extension__ ({							\
+  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__(*(__ptr)) __fv						\
+    = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
+  /* If __high is explicitly NULL, we must not emit the			\
+     upper-bound comparison.  We need to cast __high to an		\
+     unsigned long before handing it to __builtin_constant_p to		\
+     ensure that clang/llvm correctly detects NULL as a constant if it	\
+     is defined as (void*) 0.  */					\
+  if (__builtin_constant_p ((unsigned long)__high)			\
+      && __high == ((void *)0))						\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "ldr" __sz "cs\t%[__v], %[__p]\n\t"				\
+      "movcc\t%[__v], %[__f]\n\t"					\
+      ".inst 0xe320f014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&r" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low),			\
+      /* The memory location from which we will load.  */		\
+      [__p] "m" (*(__ptr)),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "rKI" (__fv) 						\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  else									\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "cmpcs\t%[__h], %[__c]\n\t"					\
+      "ldr" __sz "hi\t%[__v], %[__p]\n\t"				\
+      "movls\t%[__v], %[__f]\n\t"					\
+      ".inst 0xe320f014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&r" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low),			\
+      [__h] "r" (__high),						\
+      /* The memory location from which we will load.  */		\
+      [__p] "m" (*(__ptr)),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "rKI" (__fv) 						\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  __nln_val;								\
+}))
+
+/* Double-word version.  */
+#define __load_no_speculate2(__ptr, __low, __high, __failval,		\
+			     __cmpptr) 					\
+(__extension__ ({							\
+  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__(*(__ptr)) __fv						\
+    = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
+  /* If __high is explicitly NULL, we must not emit the			\
+     upper-bound comparison.  We need to cast __high to an		\
+     unsigned long before handing it to __builtin_constant_p to		\
+     ensure that clang/llvm correctly detects NULL as a constant if it	\
+     is defined as (void*) 0.  */					\
+  if (__builtin_constant_p ((unsigned long)__high)			\
+      && __high == ((void *)0))						\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "ldrcs\t%Q[__v], [%[__p]]\n\t"					\
+      "ldrcs\t%R[__v], [%[__p], #4]\n\t"				\
+      "movcc\t%Q[__v], %Q[__f]\n\t"					\
+      "movcc\t%R[__v], %R[__f]\n\t"					\
+      ".inst 0xe320f014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&r" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low),			\
+      /* The memory location from which we will load.  */		\
+      [__p] "r" (__ptr),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "r" (__fv) 							\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  else									\
+    {									\
+      __asm__ volatile (						\
+      ".syntax unified\n\t"						\
+      "cmp\t%[__c], %[__l]\n\t"						\
+      "cmpcs\t%[__h], %[__c]\n\t"					\
+      "ldrhi\t%Q[__v], [%[__p]]\n\t"					\
+      "ldrhi\t%R[__v], [%[__p], #4]\n\t"				\
+      "movls\t%Q[__v], %Q[__f]\n\t"					\
+      "movls\t%R[__v], %R[__f]\n\t"					\
+      ".inst 0xe320f014\t@ CSDB"					\
+      /* The value we have loaded, or failval if the condition check	\
+	 fails.  */							\
+      : [__v] "=&r" (__nln_val)						\
+      /* The pointer we wish to use for comparisons, and the low and	\
+	 high bounds to use in that comparison. Note that this need	\
+	 not be the same as the pointer from which we will load.  */	\
+      : [__c] "r" (__cmpptr), [__l] "r" (__low),			\
+      [__h] "r" (__high),						\
+      /* The memory location from which we will load.  */		\
+      [__p] "r" (__ptr),						\
+      /* The value to return if the condition check fails.  */		\
+      [__f] "r" (__fv) 							\
+      /* We always clobber the condition codes.  */			\
+      : "cc");								\
+    }									\
+  __nln_val;								\
+}))
+
+#endif // __thumb2__
+
+/* Common to ARM and Thumb2.  */
+
+#define __load_no_speculate(__ptr, __low, __high, __failval, __cmpptr)	\
+(__extension__ ({							\
+  __typeof__ (*(__ptr)) __nl_val;					\
+									\
+  switch (sizeof(__nl_val)) {						\
+    case 1:								\
+      __nl_val = __load_no_speculate1 (__ptr, __low, __high,		\
+				       __failval, __cmpptr, "b");	\
+      break;								\
+    case 2:								\
+      __nl_val = __load_no_speculate1 (__ptr, __low, __high,		\
+				       __failval, __cmpptr, "h");	\
+      break;								\
+    case 4:								\
+      __nl_val = __load_no_speculate1 (__ptr, __low, __high,		\
+				       __failval, __cmpptr, "");	\
+      break;								\
+    case 8:								\
+      __nl_val = __load_no_speculate2 (__ptr, __low, __high,		\
+				       __failval, __cmpptr);		\
+      break;								\
+    default:								\
+      {									\
+        char __static_assert_no_speculate_load_size_too_big 		\
+		[sizeof (__nl_val) > 8 ? -1 : 1];			\
+        break;								\
+      }									\
+ }									\
+									\
+  __nl_val;								\
+}))
+
+#define load_no_speculate(__ptr, __low, __high) 			\
+(__extension__ ({							\
+  __typeof__ ((__ptr)) __ptr_once = (__ptr);				\
+  __load_no_speculate (__ptr_once, __low, __high, 0, __ptr_once);	\
+}))
+
+#define load_no_speculate_fail(__ptr, __low, __high, __failval) 	\
+(__extension__ ({							\
+  __typeof__ ((__ptr)) __ptr_once = (__ptr);				\
+  __load_no_speculate (__ptr_once, __low, __high,			\
+		       __failval, __ptr_once);				\
+}))
+
+#define load_no_speculate_cmp(__ptr, __low, __high, __failval, __cmpptr) \
+  (__load_no_speculate (__ptr, __low, __high, __failval, __cmpptr))
+
 #else
 #error "No fallback provided for load_no_speculate"
 #endif

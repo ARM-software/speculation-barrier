@@ -68,7 +68,8 @@ stored within the array or with `FAIL`.
 ## Supported Environments
 
 This header provides a migration path to using the builtin function for
-the AArch64 execution state of Armv8-A.
+the AArch64 execution state of Armv8-A, and for the A32 (Arm) and T32 (Thumb)
+execution states of Armv7-A and Armv8-A.
 
 Support for other architectures is currently only provided when using a
 compiler which provides the predefine `__HAVE_LOAD_NO_SPECULATE`,
