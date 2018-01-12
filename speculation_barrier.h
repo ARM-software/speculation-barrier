@@ -49,7 +49,7 @@
 #define __load_no_speculate1(__ptr, __low, __high, __failval,		\
 			     __cmpptr, __w, __sz) 			\
 (__extension__ ({							\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__ (0 + (*(__ptr)))  __nln_val;				\
   /* This typecasting is required to ensure correct handling of upper   \
      bits of failval, to ensure a clean return from the CSEL below.  */	\
   __typeof__(*(__ptr)) __fv						\
@@ -108,14 +108,14 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __nln_val;								\
+  (__typeof__ (*(__ptr)))__nln_val;					\
 }))
 
 #define __load_no_speculate(__ptr, __low, __high, __failval, __cmpptr)	\
 (__extension__ ({							\
-  __typeof__ (*(__ptr)) __nl_val;					\
+  __typeof__ (0 + *(__ptr)) __nl_val;					\
 									\
-  switch (sizeof(__nl_val)) {						\
+  switch (sizeof(*(__ptr))) {						\
     case 1:								\
       __nl_val = __load_no_speculate1 (__ptr, __low, __high,		\
 				       __failval, __cmpptr, "w", "b");	\
@@ -140,7 +140,7 @@
       }									\
  }									\
 									\
-  __nl_val;								\
+  (__typeof__ (*(__ptr)))__nl_val;					\
 }))
 
 #define load_no_speculate(__ptr, __low, __high) 			\
@@ -166,7 +166,7 @@
 #define __load_no_speculate1(__ptr, __low, __high, __failval,		\
 			     __cmpptr, __sz) 				\
 (__extension__ ({							\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__ (0 + *(__ptr))  __nln_val;					\
   __typeof__(*(__ptr)) __fv						\
     = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
   /* If __high is explicitly NULL, we must not emit the			\
@@ -228,14 +228,14 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __nln_val;								\
+  (__typeof__ (*(__ptr)))__nln_val;					\
 }))									\
 									\
 /* Double-word version.  */
 #define __load_no_speculate2(__ptr, __low, __high, __failval,		\
-			     __cmpptr) 			\
+			     __cmpptr) 					\
 (__extension__ ({							\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__ (0 + *(__ptr))  __nln_val;					\
   __typeof__(*(__ptr)) __fv						\
     = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
   /* If __high is explicitly NULL, we must not emit the			\
@@ -304,7 +304,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __nln_val;								\
+  __typeof__ (*(__ptr))  __nln_val;					\
 }))
 
 #else
@@ -313,7 +313,7 @@
 #define __load_no_speculate1(__ptr, __low, __high, __failval,		\
 			     __cmpptr, __sz) 				\
 (__extension__ ({							\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__ (0 + *(__ptr))  __nln_val;					\
   __typeof__(*(__ptr)) __fv						\
     = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
   /* If __high is explicitly NULL, we must not emit the			\
@@ -368,14 +368,14 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __nln_val;								\
+  __typeof__ (*(__ptr))  __nln_val;					\
 }))
 
 /* Double-word version.  */
 #define __load_no_speculate2(__ptr, __low, __high, __failval,		\
 			     __cmpptr) 					\
 (__extension__ ({							\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  __typeof__ (0 + *(__ptr))  __nln_val;					\
   __typeof__(*(__ptr)) __fv						\
     = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
   /* If __high is explicitly NULL, we must not emit the			\
@@ -434,7 +434,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __nln_val;								\
+  __typeof__ (*(__ptr))  __nln_val;					\
 }))
 
 #endif // __thumb2__
@@ -443,9 +443,9 @@
 
 #define __load_no_speculate(__ptr, __low, __high, __failval, __cmpptr)	\
 (__extension__ ({							\
-  __typeof__ (*(__ptr)) __nl_val;					\
+  __typeof__ (0 + *(__ptr)) __nl_val;					\
 									\
-  switch (sizeof(__nl_val)) {						\
+  switch (sizeof(*(__ptr))) {						\
     case 1:								\
       __nl_val = __load_no_speculate1 (__ptr, __low, __high,		\
 				       __failval, __cmpptr, "b");	\
@@ -470,7 +470,7 @@
       }									\
  }									\
 									\
-  __nl_val;								\
+  __typeof__ (*(__ptr))  __nl_val;					\
 }))
 
 #define load_no_speculate(__ptr, __low, __high) 			\
