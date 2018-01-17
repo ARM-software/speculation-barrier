@@ -108,7 +108,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  (__typeof__ (*(__ptr)))__nln_val;					\
+  (__typeof__ (*(__ptr))) __nln_val;					\
 }))
 
 #define __load_no_speculate(__ptr, __low, __high, __failval, __cmpptr)	\
@@ -140,7 +140,7 @@
       }									\
  }									\
 									\
-  (__typeof__ (*(__ptr)))__nl_val;					\
+  (__typeof__ (*(__ptr))) __nl_val;					\
 }))
 
 #define load_no_speculate(__ptr, __low, __high) 			\
@@ -228,7 +228,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  (__typeof__ (*(__ptr)))__nln_val;					\
+  (__typeof__ (*(__ptr))) __nln_val;					\
 }))									\
 									\
 /* Double-word version.  */
@@ -304,7 +304,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  (__typeof__ (*(__ptr))) __nln_val;					\
 }))
 
 #else
@@ -368,7 +368,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  (__typeof__ (*(__ptr))) __nln_val;					\
 }))
 
 /* Double-word version.  */
@@ -434,7 +434,7 @@
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
-  __typeof__ (*(__ptr))  __nln_val;					\
+  (__typeof__ (*(__ptr))) __nln_val;					\
 }))
 
 #endif // __thumb2__
@@ -470,7 +470,7 @@
       }									\
  }									\
 									\
-  __typeof__ (*(__ptr))  __nl_val;					\
+  (__typeof__ (*(__ptr))) __nl_val;					\
 }))
 
 #define load_no_speculate(__ptr, __low, __high) 			\
