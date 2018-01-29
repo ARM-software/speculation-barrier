@@ -159,7 +159,8 @@
 #define load_no_speculate_cmp(__ptr, __low, __high, __failval, __cmpptr) \
   (__load_no_speculate (__ptr, __low, __high, __failval, __cmpptr))
 
-#elif defined (__ARM_32BIT_STATE)
+/* AArch32 support for ARM and Thumb-2.  Thumb-1 is not supported.  */
+#elif defined (__ARM_32BIT_STATE) && (defined (__thumb2__) || !defined (__thumb__))
 #ifdef __thumb2__
 /* Thumb2 case.  */
 
@@ -171,7 +172,7 @@
     = (__typeof__(*(__ptr)))(unsigned long) (__failval);		\
   /* If __high is explicitly NULL, we must not emit the			\
      upper-bound comparison.  We need to cast __high to an		\
-     unsigned long before handing it to __builtin_constant_p to	\
+     unsigned long before handing it to __builtin_constant_p to		\
      ensure that clang/llvm correctly detects NULL as a constant if it	\
      is defined as (void*) 0.  */					\
   if (__builtin_constant_p ((unsigned long)__high)			\
@@ -185,7 +186,8 @@
       ".ns%=:\n\t"							\
       "it\tcc\n\t"							\
       "movcc\t%[__v], %[__f]\n\t"					\
-      ".inst 0xf3af8014\t@ CSDB"					\
+      ".inst.n 0xf3af\t@ CSDB\n\t"					\
+      ".inst.n 0x8014\t@ CSDB"						\
       /* The value we have loaded, or failval if the condition check	\
 	 fails.  */							\
       : [__v] "=&l" (__nln_val)						\
@@ -196,7 +198,7 @@
       /* The memory location from which we will load.  */		\
       [__p] "m" (*(__ptr)),						\
       /* The value to return if the condition check fails.  */		\
-      [__f] "rKI" (__fv) 						\
+      [__f] "r" (__fv) 							\
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
@@ -212,7 +214,8 @@
       ".ns%=:\n\t"							\
       "it\tls\n\t"							\
       "movls\t%[__v], %[__f]\n\t"					\
-      ".inst 0xf3af8014\t@ CSDB"					\
+      ".inst.n 0xf3af\t@ CSDB\n\t"					\
+      ".inst.n 0x8014\t@ CSDB"					\
       /* The value we have loaded, or failval if the condition check	\
 	 fails.  */							\
       : [__v] "=&l" (__nln_val)						\
@@ -224,7 +227,7 @@
       /* The memory location from which we will load.  */		\
       [__p] "m" (*(__ptr)),						\
       /* The value to return if the condition check fails.  */		\
-      [__f] "rKI" (__fv) 						\
+      [__f] "r" (__fv) 							\
       /* We always clobber the condition codes.  */			\
       : "cc");								\
     }									\
@@ -258,7 +261,8 @@
       "movcc\t%Q[__v], %Q[__f]\n\t"					\
       "it\tcc\n\t"							\
       "movcc\t%R[__v], %R[__f]\n\t"					\
-      ".inst 0xf3af8014\t@ CSDB"					\
+      ".inst.n 0xf3af\t@ CSDB\n\t"					\
+      ".inst.n 0x8014\t@ CSDB"					\
       /* The value we have loaded, or failval if the condition check	\
 	 fails.  */							\
       : [__v] "=&l" (__nln_val)						\
@@ -288,7 +292,8 @@
       "movls\t%Q[__v], %Q[__f]\n\t"					\
       "it\tls\n\t"							\
       "movls\t%R[__v], %R[__f]\n\t"					\
-      ".inst 0xf3af8014\t@ CSDB"					\
+      ".inst.n 0xf3af\t@ CSDB\n\t"					\
+      ".inst.n 0x8014\t@ CSDB"						\
       /* The value we have loaded, or failval if the condition check	\
 	 fails.  */							\
       : [__v] "=&l" (__nln_val)						\
